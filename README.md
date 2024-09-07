@@ -52,6 +52,10 @@ return {
 }
 ```
 
+- `alias` is the name used by `lspconfig` to identify the LSP server during setup. This is what you'll use in your configuration to refer to the LSP server. This field can be omitted if the `name` and `lspconfig` are the same.
+
+- `name` is the actual name of the Language Server (LSP) itself, typically corresponding to the executable or package name for the server.
+
 
 ### License
 
