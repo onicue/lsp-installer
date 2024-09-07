@@ -86,8 +86,8 @@ M.install = function(server, callback)
   end
 
   local handle
-  handle = vim.loop.spawn("/usr/bin/env", {
-    args = { "bash", "-c", "set -e\n" .. server.install_script },
+  handle = vim.loop.spawn(vim.o.shell, {
+    args = { "-c", "set -e\n" .. server.install_script },
     cwd = path,
   }, function(code, signal)
     onExit(code, signal)
