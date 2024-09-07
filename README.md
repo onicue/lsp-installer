@@ -36,6 +36,22 @@ require("lsp-installer").setup({
   }
 })
 ```
+You also need to create the directory you specified in `servers_dir` and add the installation configuration there with the same name as in `ensure_installed`.
+For example:
+```lua
+--file name "cmake"
+return {
+  alias = "cmake",
+  name = "cmake-language-server",
+  install_script = [[
+    python3 -m venv .
+    ./bin/pip3 install -U pip
+    ./bin/pip3 install -U cmake-language-server
+  ]]
+  --you can also make a special function for deletion
+}
+```
+
 
 ### License
 
