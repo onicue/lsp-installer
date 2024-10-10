@@ -1,5 +1,7 @@
 local M = {}
 
+local lsp = require("lspconfig")
+
 M.opts = {
   ensure_installed = {},
   dir = vim.fn.stdpath("data") .. "/lsp-installer",
@@ -172,15 +174,15 @@ M.run_lsp = function( server )
 
   if not M.opts.lsp[name] then
     if not M.opts.lsp["default"] then
-      require("lspconfig")[name].setup{}
+      lsp[name].setup{}
     else
-      require("lspconfig")[name].setup(M.opts.lsp["default"])
+      lsp[name].setup(M.opts.lsp["default"])
     end
   else
     if M.opts.lsp[name] == false then
       return
     end
-    require("lspconfig")[name].setup(M.opts.lsp[name])
+    lsp[name].setup(M.opts.lsp[name])
   end
 end
 
