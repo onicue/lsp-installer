@@ -70,7 +70,7 @@ local function check_executable(path, name)
     return result
   end
 
-  result = check_lsp_file(bin_path)
+  result = check_lsp_file(alt_path)
   if result then
     return result
   end
