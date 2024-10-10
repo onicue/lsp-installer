@@ -52,14 +52,14 @@ M.get_installed_packages = function()
 end
 
 
-local function check_lsp_file(path) {
+local function check_lsp_file(path)
   local stat = vim.loop.fs_stat(path)
   if stat and stat.type == 'file' and vim.fn.executable(path) == 1 then
     return path
   end
 
   return nil
-}
+end
 
 local function check_executable(path, name)
   local bin_path = path .. "/bin/" .. name
