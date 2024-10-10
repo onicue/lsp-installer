@@ -49,6 +49,33 @@ M.get_installed_packages = function()
   return t
 end
 
+
+local function check_lsp_file(path) {
+  local stat = vim.loop.fs_stat(path)
+  if stat and stat.type == 'file' and vim.fn.executable(path) == 1 then
+    return path
+  end
+
+  return nil
+}
+
+local function check_executable(path, name)
+  local bin_path = path .. "/bin/" .. name
+  local alt_path = path .. "/" .. name
+
+  local result = check_lsp_file(bin_path)
+  if result then
+    return result
+  end
+
+  result = check_lsp_file(bin_path)
+  if result then
+    return result
+  end
+
+  return result -- if not found
+end
+
 M.create_symlink = function(target, link)
   if vim.fn.filereadable(link) == 1 or vim.fn.isdirectory(link) == 1 then
     vim.fn.delete(link)
@@ -100,8 +127,18 @@ M.install = function(server, callback)
   end
 
   local server_link_addr = get_bin_dir() .. "/" .. name
-  local server_bin_addr = server.bin or path .. "/bin/" .. name
-  M.create_symlink(server_bin_addr, server_link_addr)
+  local server_bin_addr = server.bin or check_executable(path)
+
+  if server_bin_addr and server_link_addr then
+    M.create_symlink(server_bin_addr, server_link_addr)
+  else
+    if not server_bin_addr then
+      error("[lsp-installer] Cannot find " .. server_bin_addr ".")
+    end
+    if not server_link_addr then
+      error("[lsp-installer] Cannot find " .. server_link_addr ".")
+    end
+  end
 end
 
 M.delete = function(server)
