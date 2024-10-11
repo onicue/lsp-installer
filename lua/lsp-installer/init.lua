@@ -1,5 +1,4 @@
 local M = {}
-
 local lsp = require("lspconfig")
 
 M.opts = {
@@ -23,7 +22,7 @@ local function get_server(server)
   if type(server) == "table" then
     return server
   elseif type(server) == "string" then
-    return require( M.opts.servers_dir .. "." .. server)
+    return require(M.opts.servers_dir .. "." .. server)
   else
     error(("[lsp-installer] %s must be a table or a string"):format(server))
   end
@@ -31,7 +30,7 @@ end
 
 M.is_server_installed = function(name)
   local server_name = get_server(name).name
-  return vim.fn.isdirectory(get_pkg_dir() .. server_name) == true
+  return vim.fn.isdirectory(get_pkg_dir() .. "/" .. server_name) == 1
 end
 
 local function get_files_in_dir(dir)
@@ -51,14 +50,9 @@ M.get_installed_packages = function()
   return t
 end
 
-
 local function check_lsp_file(path)
   local stat = vim.loop.fs_stat(path)
-  if stat and stat.type == 'file' and vim.fn.executable(path) == 1 then
-    return path
-  end
-
-  return nil
+  return stat and stat.type == 'file' and vim.fn.executable(path) == 1 and path or nil
 end
 
 local function check_executable(path, name)
@@ -75,16 +69,33 @@ local function check_executable(path, name)
     return result
   end
 
-  return result -- if not found
+  return nil -- if not found
 end
 
-M.create_symlink = function(target, link)
-  if vim.fn.filereadable(link) == 1 or vim.fn.isdirectory(link) == 1 then
+local function create_symlink(target, link)
+  if vim.fn.empty(link) == 0 then
     vim.fn.delete(link)
   end
-  local success = os.execute(string.format('ln -s %s %s', target, link))
-  if success ~= 0 then
-    error("[lsp-installer] Failed to create symlink: " .. vim.fn.strerror(success))
+  local success = vim.fn.system(string.format('ln -s %s %s', target, link))
+  if success ~= "" then
+    error("[lsp-installer] Failed to create symlink: " .. success)
+  end
+end
+
+local function do_symlink(server)
+  local name = server.name
+  local server_link_addr = get_bin_dir() .. "/" .. name
+  local server_bin_addr = server.bin or check_executable(get_pkg_dir() .. "/" .. name, name)
+
+  if server_bin_addr and server_link_addr then
+    create_symlink(server_bin_addr, server_link_addr)
+  else
+    if not server_bin_addr then
+      error("[lsp-installer] Cannot find " .. server_bin_addr .. ".")
+    end
+    if not server_link_addr then
+      error("[lsp-installer] Cannot find " .. server_link_addr .. ".")
+    end
   end
 end
 
@@ -110,6 +121,8 @@ M.install = function(server, callback)
         if callback then
           callback(server)
         end
+
+        do_symlink(server)
       end
     end)
   end
@@ -126,20 +139,6 @@ M.install = function(server, callback)
   if not handle then
     error("[lsp-installer] Failed to start installation process.")
     return
-  end
-
-  local server_link_addr = get_bin_dir() .. "/" .. name
-  local server_bin_addr = server.bin or check_executable(path)
-
-  if server_bin_addr and server_link_addr then
-    M.create_symlink(server_bin_addr, server_link_addr)
-  else
-    if not server_bin_addr then
-      error("[lsp-installer] Cannot find " .. server_bin_addr ".")
-    end
-    if not server_link_addr then
-      error("[lsp-installer] Cannot find " .. server_link_addr ".")
-    end
   end
 end
 
@@ -158,7 +157,7 @@ end
 M.init = function()
   local function check_and_create_dir(name)
     if not vim.fn.isdirectory(name) then
-      os.execute("mkdir " .. name)
+      vim.fn.mkdir(name, "p")
     end
   end
 
@@ -169,7 +168,7 @@ M.init = function()
   vim.env.PATH = get_bin_dir() .. ":" .. vim.env.PATH
 end
 
-M.run_lsp = function( server )
+M.run_lsp = function(server)
   local name = server.alias or server.name
 
   if not M.opts.lsp[name] then
