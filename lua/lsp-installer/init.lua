@@ -178,16 +178,17 @@ M.run_lsp = function(server)
       lsp[name].setup(M.opts.lsp["default"])
     end
   else
-    if M.opts.lsp[name] == false then
-      return
+    if M.opts.lsp[name] then
+      lsp[name].setup(M.opts.lsp[name])
     end
-    lsp[name].setup(M.opts.lsp[name])
   end
 end
 
 M.setup = function(opts)
   if opts then
-    vim.tbl_extend('force', M.opts, opts)
+      for key, value in pairs(opts) do
+          M.opts[key] = value
+      end
   end
 
   M.init()
